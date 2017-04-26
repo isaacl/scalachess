@@ -12,7 +12,8 @@ libraryDependencies ++= List(
   "com.github.ornicar" %% "scalalib" % "5.7",
   "joda-time" % "joda-time" % "2.9.7",
   "org.joda" % "joda-convert" % "1.8",
-  "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0")
+  "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0",
+  "org.scalactic" %% "scalactic" % "3.0.1")
 
 // updateOptions := updateOptions.value.withCachedResolution(true)
 
