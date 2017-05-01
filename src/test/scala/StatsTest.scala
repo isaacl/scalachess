@@ -12,10 +12,14 @@ class StatsTest extends Specification with ValidationMatchers {
     (elts map { x => Math.pow(x - mean, 2) } sum).toFloat / (elts.size - 1)
   }
 
+  def beApprox(comp: Float) = (f: Float) => {
+    comp must beCloseTo(f +/- 0.001f * comp)
+  }
+
   def beLike(comp: StatsT) = (s: StatsT) => {
     s.samples must_== comp.samples
-    s.mean must beCloseTo(comp.mean +/- 0.001f * s.mean)
-    s.variance must beCloseTo(comp.variance +/- 0.001f * s.variance)
+    s.mean must beApprox(comp.mean)
+    s.variance must beApprox(comp.variance)
   }
 
   "empty stats" should {
@@ -24,25 +28,37 @@ class StatsTest extends Specification with ValidationMatchers {
       Stats.mean must_== 0f
       Stats.samples must_== 0
 
+      Stats must beLike(StatHolder())
     }
-    "convert to stats" in {
+
+    "convert to StatHolder" in {
       Stats.record(5) must beLike(StatHolder().record(5))
-      Stats.record(0) must beLike(StatHolder().record(0))
+
+      "with good stats" in {
+        Stats.record(5).samples must_== 1
+        Stats.record(5).variance must_== 0f
+        Stats.record(5).mean must_== 5f
+      }
     }
+
   }
 
-  "online stats" should {
-    val data = ((1 to 200) ++ (1 to 300)).toArray map { _.toFloat }
-    val statsN = Stats record data.sortWith(_ % 5 > _ % 3) // Shuffle data
-    "match stub" in {
-      statsN.mean must (beCloseTo(realMean(data) +/- 0.01f))
-      statsN.variance must (beCloseTo(realVar(data) +/- 0.1f))
-      statsN.samples must_== 500
+  "large values" should {
+    // Tight data w/ large mean. Shuffled for Stats.
+    val base = (1 to 100) ++ (1 to 100) ++ (1 to 200)
+    val data = base map { _ + 1e5f }
+    val shuffledData = base.sortWith(_ % 8 > _ % 8) map { _ + 1e5f }
+
+    val statsN = Stats record shuffledData
+    "match actuals" in {
+      statsN.mean must beApprox(realMean(data))
+      statsN.variance must beApprox(realVar(data))
+      statsN.samples must_== 400
     }
     "match concat" in {
-      statsN must beLike(Stats.record(data take 5) + Stats.record(data drop 5))
+      statsN must beLike(Stats.record(data take 1) + Stats.record(data drop 1))
       statsN must beLike(Stats.record(data take 100) + Stats.record(data drop 100))
-      statsN must beLike(Stats.record(data take 250) + Stats.record(data drop 250))
+      statsN must beLike(Stats.record(data take 200) + Stats.record(data drop 200))
     }
   }
 }

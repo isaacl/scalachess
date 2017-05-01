@@ -7,7 +7,8 @@ protected sealed trait StatsT {
   def record(value: Float): StatsT
   def +(o: StatsT): StatsT
 
-  def record(values: Seq[Float]): StatsT = values.foldLeft(this) { (s, v) => s record v }
+  def record(values: Traversable[Float]): StatsT =
+    values.foldLeft(this) { (s, v) => s record v }
 }
 
 private[chess] final case class StatHolder(
