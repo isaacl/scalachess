@@ -1,46 +1,48 @@
 package chess
 
-// import org.scalatest._
-// import Matchers._
-
-import org.scalactic._
-import Tolerance._
-
 import org.specs2.mutable.Specification
 import ornicar.scalalib.test.ValidationMatchers
 
-//import scalaz.Validation.FlatMap._
-
 class StatsTest extends Specification with ValidationMatchers {
 
-  def seqMean(elts: Seq[Float]): Float = elts.sum / elts.size
+  def realMean(elts: Seq[Float]): Float = elts.sum / elts.size
 
-  def seqVariance(elts: Seq[Float]): Double = {
-    val mean = seqMean(elts).toDouble
-    (elts map { x => Math.pow(x - mean, 2) } sum) / (elts.size - 1)
+  def realVar(elts: Seq[Float]): Float = {
+    val mean = realMean(elts).toDouble
+    (elts map { x => Math.pow(x - mean, 2) } sum).toFloat / (elts.size - 1)
   }
 
-  val delta = 0.001f
-
-  // def ==~(d: => Double) = beCloseTo(d +/- delta)
-
-  implicit val statsEqual = new Equality[Stats] {
-    // def areEqual(a: Stats, b: Any) = true
-    def areEqual(a: Stats, b: Any): Boolean = (a, b) match {
-      case (StatHolder(aSamp, aMean, aSN), StatHolder(bSamp, bMean, bSN)) => {
-        aSamp == bSamp && (aMean === bMean +- delta) && (aSN === bSN +- delta)
-      }
-      case _ => a == b
-    }
+  def beLike(comp: StatsT) = (s: StatsT) => {
+    s.samples must_== comp.samples
+    s.mean must beCloseTo(comp.mean +/- 0.001f * s.mean)
+    s.variance must beCloseTo(comp.variance +/- 0.001f * s.variance)
   }
 
   "empty stats" should {
-    EmptyStats.variance must_== 0f
-    EmptyStats.mean must_== 0f
+    "have good defaults" in {
+      Stats.variance must_== 0f
+      Stats.mean must_== 0f
+      Stats.samples must_== 0
+
+    }
+    "convert to stats" in {
+      Stats.record(5) must beLike(StatHolder().record(5))
+      Stats.record(0) must beLike(StatHolder().record(0))
+    }
   }
 
   "online stats" should {
-    // val data = (1 to 100).toArray map { _.toFloat }
-    EmptyStats.record(5.0001f) === (new StatHolder record 5)
+    val data = ((1 to 200) ++ (1 to 300)).toArray map { _.toFloat }
+    val statsN = Stats record data.sortWith(_ % 5 > _ % 3) // Shuffle data
+    "match stub" in {
+      statsN.mean must (beCloseTo(realMean(data) +/- 0.01f))
+      statsN.variance must (beCloseTo(realVar(data) +/- 0.1f))
+      statsN.samples must_== 500
+    }
+    "match concat" in {
+      statsN must beLike(Stats.record(data take 5) + Stats.record(data drop 5))
+      statsN must beLike(Stats.record(data take 100) + Stats.record(data drop 100))
+      statsN must beLike(Stats.record(data take 250) + Stats.record(data drop 250))
+    }
   }
 }
