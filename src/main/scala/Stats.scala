@@ -1,13 +1,13 @@
 package chess
 
-protected sealed trait StatsT {
+sealed trait Stats {
   def samples: Int
   def mean: Float
   def variance: Float
-  def record(value: Float): StatsT
-  def +(o: StatsT): StatsT
+  def record(value: Float): Stats
+  def +(o: Stats): Stats
 
-  def record(values: Traversable[Float]): StatsT =
+  def record(values: Traversable[Float]): Stats =
     values.foldLeft(this) { (s, v) => s record v }
 }
 
@@ -15,7 +15,7 @@ private[chess] final case class StatHolder(
     samples: Int = 0,
     mean: Float = 0f,
     sn: Float = 0f
-) extends StatsT {
+) extends Stats {
   def variance = if (samples < 2) 0f else sn / (samples - 1)
 
   def record(value: Float) = {
@@ -27,7 +27,7 @@ private[chess] final case class StatHolder(
     StatHolder(newSamples, newMean, newSN)
   }
 
-  def +(o: StatsT) = o match {
+  def +(o: Stats) = o match {
     case StatHolder(oSamples, oMean, oSN) => {
       val total = samples + oSamples
       val combMean = {
@@ -41,15 +41,20 @@ private[chess] final case class StatHolder(
       StatHolder(total, combMean, combSn)
     }
 
-    case Stats => this
+    case _ => this
   }
 }
 
-object Stats extends StatsT {
-  val samples = 0
-  val mean = 0f
-  val variance = 0f
-
+object Stats {
   def record(value: Float) = StatHolder(1, value, 0f)
-  def +(o: StatsT) = o
+
+  val empty = new Stats {
+    val samples = 0
+    val mean = 0f
+    val variance = 0f
+
+    def record(value: Float) = Stats.record(value)
+    def +(o: Stats) = o
+  }
 }
+
