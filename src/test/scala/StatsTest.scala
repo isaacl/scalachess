@@ -16,7 +16,7 @@ class StatsTest extends Specification with ValidationMatchers {
     comp must beCloseTo(f +/- 0.001f * comp)
   }
 
-  def beLike(comp: StatsT) = (s: StatsT) => {
+  def beLike(comp: Stats) = (s: Stats) => {
     s.samples must_== comp.samples
     s.mean must beApprox(comp.mean)
     s.variance must beApprox(comp.variance)
@@ -24,15 +24,15 @@ class StatsTest extends Specification with ValidationMatchers {
 
   "empty stats" should {
     "have good defaults" in {
-      Stats.variance must_== 0f
-      Stats.mean must_== 0f
-      Stats.samples must_== 0
+      Stats.empty.variance must_== 0f
+      Stats.empty.mean must_== 0f
+      Stats.empty.samples must_== 0
 
-      Stats must beLike(StatHolder())
+      Stats.empty must beLike(StatHolder())
     }
 
     "convert to StatHolder" in {
-      Stats.record(5) must beLike(StatHolder().record(5))
+      Stats.empty.record(5) must beLike(StatHolder().record(5))
 
       "with good stats" in {
         Stats.record(5).samples must_== 1
@@ -49,7 +49,7 @@ class StatsTest extends Specification with ValidationMatchers {
     val data = base map { _ + 1e5f }
     val shuffledData = base.sortWith(_ % 8 > _ % 8) map { _ + 1e5f }
 
-    val statsN = Stats record shuffledData
+    val statsN = Stats.empty record shuffledData
     "match actuals" in {
       statsN.mean must beApprox(realMean(data))
       statsN.variance must beApprox(realVar(data))

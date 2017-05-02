@@ -9,6 +9,8 @@ sealed trait Stats {
 
   def record(values: Traversable[Float]): Stats =
     values.foldLeft(this) { (s, v) => s record v }
+
+  def stdDev = Math.sqrt(variance).toFloat
 }
 
 private[chess] final case class StatHolder(
@@ -46,14 +48,15 @@ private[chess] final case class StatHolder(
 }
 
 object Stats {
-  def record(value: Float) = StatHolder(1, value, 0f)
+  def record(value: Float) = empty.record(value)
+  def record(values: Traversable[Float]) = empty.record(values)
 
   val empty = new Stats {
     val samples = 0
     val mean = 0f
     val variance = 0f
 
-    def record(value: Float) = Stats.record(value)
+    def record(value: Float) = StatHolder(1, value, 0f)
     def +(o: Stats) = o
   }
 }
