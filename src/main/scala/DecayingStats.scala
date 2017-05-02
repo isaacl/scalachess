@@ -27,15 +27,17 @@ protected final class DecayingStatsHolder(
   }
 }
 
+protected final class EmptyDecayingStats(decay: Float) extends DecayingStats {
+  def mean = 0f
+  def variance = 0f
+  def record(value: Float) = new DecayingStatsHolder(
+    mean = value,
+    variance = value * value,
+    decay = decay
+  )
+}
+
 object DecayingStats {
-  def empty(decay: Float = 0.9f) = new DecayingStats {
-    def mean = 0f
-    def variance = 0f
-    def record(value: Float) = new DecayingStatsHolder(
-      mean = value,
-      variance = 0f,
-      decay = decay
-    )
-  }
+  def empty(decay: Float = 0.9f) = new EmptyDecayingStats(decay)
 }
 

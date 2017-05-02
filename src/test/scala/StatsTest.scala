@@ -27,12 +27,10 @@ class StatsTest extends Specification with ValidationMatchers {
       Stats.empty.variance must_== 0f
       Stats.empty.mean must_== 0f
       Stats.empty.samples must_== 0
-
-      Stats.empty must beLike(StatHolder())
     }
 
     "convert to StatHolder" in {
-      Stats.empty.record(5) must beLike(StatHolder().record(5))
+      Stats.record(5) must beLike(StatHolder(0, 0f, 0f).record(5))
 
       "with good stats" in {
         Stats.record(5).samples must_== 1
