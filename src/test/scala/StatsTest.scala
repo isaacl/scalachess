@@ -13,7 +13,8 @@ class StatsTest extends Specification with ValidationMatchers {
   }
 
   def beApprox(comp: Float) = (f: Float) => {
-    comp must beCloseTo(f +/- 0.001f * comp)
+    if (comp.isNaN) f.isNaN must beTrue
+    else comp must beCloseTo(f +/- 0.001f * comp)
   }
 
   def beLike(comp: Stats) = (s: Stats) => {
@@ -24,7 +25,7 @@ class StatsTest extends Specification with ValidationMatchers {
 
   "empty stats" should {
     "have good defaults" in {
-      Stats.empty.variance must_== 0f
+      Stats.empty.variance.isNaN must beTrue
       Stats.empty.mean must_== 0f
       Stats.empty.samples must_== 0
     }
@@ -34,7 +35,7 @@ class StatsTest extends Specification with ValidationMatchers {
 
       "with good stats" in {
         Stats.record(5).samples must_== 1
-        Stats.record(5).variance must_== 0f
+        Stats.record(5).variance.isNaN must beTrue
         Stats.record(5).mean must_== 5f
       }
     }
@@ -54,6 +55,8 @@ class StatsTest extends Specification with ValidationMatchers {
       statsN.samples must_== 400
     }
     "match concat" in {
+      statsN must_== (Stats.empty + statsN)
+      statsN must_== (statsN + Stats.empty)
       statsN must beLike(Stats.record(data take 1) + Stats.record(data drop 1))
       statsN must beLike(Stats.record(data take 100) + Stats.record(data drop 100))
       statsN must beLike(Stats.record(data take 200) + Stats.record(data drop 200))

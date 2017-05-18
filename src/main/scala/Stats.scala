@@ -7,8 +7,8 @@ sealed trait Stats {
   def record(value: Float): Stats
   def +(o: Stats): Stats
 
-  def record(values: Traversable[Float]): Stats =
-    values.foldLeft(this) { (s, v) => s record v }
+  def record[T](values: Traversable[T])(implicit n: Numeric[T]): Stats =
+    values.foldLeft(this) { (s, v) => s record n.toFloat(v) }
 
   def stdDev = Math.sqrt(variance).toFloat
 }
@@ -18,7 +18,7 @@ protected final case class StatHolder(
     mean: Float,
     sn: Float
 ) extends Stats {
-  def variance = if (samples < 2) 0f else sn / (samples - 1)
+  def variance = if (samples < 2) Float.NaN else sn / (samples - 1)
 
   def record(value: Float) = {
     val newSamples = samples + 1
@@ -57,7 +57,7 @@ protected final case class StatHolder(
 protected object EmptyStats extends Stats {
   val samples = 0
   val mean = 0f
-  val variance = 0f
+  val variance = Float.NaN
 
   def record(value: Float) = StatHolder(
     samples = 1,
@@ -72,6 +72,6 @@ object Stats {
   val empty = EmptyStats
 
   def record(value: Float) = empty.record(value)
-  def record(values: Traversable[Float]) = empty.record(values)
+  def record[T: Numeric](values: Traversable[T]) = empty.record(values)
 }
 
