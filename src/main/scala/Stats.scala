@@ -22,6 +22,23 @@ final case class Stats(samples: Int, mean: Float, sn: Float) {
       s record n.toFloat(v)
     }
 
+  def +(o: Stats) = o match {
+    case Stats(0, _, _) => this
+    case Stats(oSamples, oMean, oSN) => {
+      val invTotal = 1f / (samples + oSamples)
+      val combMean = {
+        if (samples == oSamples) (mean + oMean) * 0.5f
+        else (mean * samples + oMean * oSamples) * invTotal
+      }
+      val meanDiff = mean - oMean
+      Stats(
+        samples = samples + oSamples,
+        mean = combMean,
+        sn = sn + oSN + meanDiff * meanDiff * samples * oSamples * invTotal
+      )
+    }
+  }
+
   def variance = (samples > 1) option sn / (samples - 1)
 
   def stdDev = variance.map { Math.sqrt(_).toFloat }

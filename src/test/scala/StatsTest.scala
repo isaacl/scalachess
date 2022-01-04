@@ -37,14 +37,12 @@ class StatsTest extends Specification {
     }
 
     "make Stats" in {
-
       "with good stats" in {
         Stats(5).samples must_== 1
         Stats(5).variance must_== None
         Stats(5).mean must_== 5f
       }
     }
-
   }
 
   "large values" should {
@@ -58,6 +56,14 @@ class StatsTest extends Specification {
       statsN.mean must beApprox(realMean(data))
       statsN.variance.get must beApprox(realVar(data))
       statsN.samples must_== 400
+    }
+
+    "match concat" in {
+      statsN must_== (Stats.empty + statsN)
+      statsN must_== (statsN + Stats.empty)
+      statsN must beLike(Stats(data take 1) + Stats(data drop 1))
+      statsN must beLike(Stats(data take 100) + Stats(data drop 100))
+      statsN must beLike(Stats(data take 200) + Stats(data drop 200))
     }
   }
 }
